@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   ArrowUpRight,
   ArrowDownLeft,
   Download,
   Filter,
   X,
+  Printer,
   Save,
   Bookmark,
   Pencil,
@@ -91,6 +92,13 @@ const STATUS_STYLES: Record<string, string> = {
 function TransactionHistory() {
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const [showFilters, setShowFilters] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setIsLoading(false), 700);
+    return () => clearTimeout(t);
+  }, []);
+
   const [savedViews, setSavedViews] = useLocalStorage<SavedView[]>(
     "zk-payroll-saved-views",
     [],
@@ -333,6 +341,14 @@ function TransactionHistory() {
               <Download className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Export CSV</span>
             </button>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              Print Audit Report
+            </button>
           </div>
         </div>
 
@@ -498,67 +514,139 @@ function TransactionHistory() {
           </div>
         )}
 
-        <table className="w-full text-left">
-          <caption className="sr-only">
-            Payroll transactions with filtering and export
-          </caption>
-          <thead className="bg-gray-50">
-            <tr>
-              <th scope="col" className="px-6 py-3 text-xs font-medium text-gray-600 uppercase">Type</th>
-              <th scope="col" className="px-6 py-3 text-xs font-medium text-gray-600 uppercase">Recipient</th>
-              <th scope="col" className="px-6 py-3 text-xs font-medium text-gray-600 uppercase">Amount</th>
-              <th scope="col" className="px-6 py-3 text-xs font-medium text-gray-600 uppercase">Status</th>
-              <th scope="col" className="px-6 py-3 text-xs font-medium text-gray-600 uppercase">Date</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200" aria-live="polite">
-            {filtered.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-6 py-8 text-center text-sm text-gray-500"
-                >
-                  {hasFiltersApplied
-                    ? "No transactions match the current filters. Try broadening your filter criteria."
-                    : "No transactions yet. Process a payroll run to populate the transaction history."}
-                <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">
-                  No transactions match the current filters.
-                </td>
-              </tr>
-            ) : (
-              filtered.map((tx) => (
-                <tr key={tx.id}>
-                  <td className="px-6 py-4 flex items-center">
-                    {tx.totalAmount > 0 ? (
-                      <ArrowDownLeft className="w-4 h-4 text-green-600 mr-2" aria-hidden="true" />
-                    ) : (
-                      <ArrowUpRight className="w-4 h-4 text-red-600 mr-2" aria-hidden="true" />
-                    )}
-                    Payout
-                  </td>
-                  <td className="px-6 py-4 text-gray-900">{tx.employeeCount} employees</td>
-                  <td className="px-6 py-4 font-medium text-gray-900">${tx.totalAmount.toLocaleString()}</td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        STATUS_STYLES[tx.status] ?? "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {tx.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-gray-600">
-                    {new Date(tx.createdAt).toLocaleDateString()}
-                  </td>
+        {isLoading ? (
+          <div className="animate-pulse" role="status" aria-label="Loading transactions">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-xs font-medium text-gray-400 uppercase">Type</th>
+                  <th scope="col" className="px-6 py-3 text-xs font-medium text-gray-400 uppercase">Recipient</th>
+                  <th scope="col" className="px-6 py-3 text-xs font-medium text-gray-400 uppercase">Amount</th>
+                  <th scope="col" className="px-6 py-3 text-xs font-medium text-gray-400 uppercase">Status</th>
+                  <th scope="col" className="px-6 py-3 text-xs font-medium text-gray-400 uppercase">Date</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {[1, 2, 3, 4, 5].map((idx) => (
+                  <tr key={idx}>
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-gray-200 rounded w-16"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-gray-200 rounded w-24"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-gray-200 rounded w-20"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-6 bg-gray-200 rounded-full w-14"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-gray-200 rounded w-24"></div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <>
+            <table className="w-full text-left">
+              <caption className="sr-only">
+                Payroll transactions with filtering and export
+              </caption>
+              <thead className="bg-gray-50">
+                <tr>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-xs font-medium text-gray-600 uppercase"
+                  >
+                    Type
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-xs font-medium text-gray-600 uppercase"
+                  >
+                    Recipient
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-xs font-medium text-gray-600 uppercase"
+                  >
+                    Amount
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-xs font-medium text-gray-600 uppercase"
+                  >
+                    Status
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-xs font-medium text-gray-600 uppercase"
+                  >
+                    Date
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200" aria-live="polite">
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-6 py-8 text-center text-sm text-gray-500"
+                    >
+                      {hasFiltersApplied
+                        ? "No transactions match the current filters. Try broadening your filter criteria."
+                        : "No transactions yet. Process a payroll run to populate the transaction history."}
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((tx) => (
+                    <tr key={tx.id}>
+                      <td className="px-6 py-4 flex items-center">
+                        {tx.totalAmount > 0 ? (
+                          <ArrowDownLeft
+                            className="w-4 h-4 text-green-600 mr-2"
+                            aria-hidden="true"
+                          />
+                        ) : (
+                          <ArrowUpRight
+                            className="w-4 h-4 text-red-600 mr-2"
+                            aria-hidden="true"
+                          />
+                        )}
+                        Payout
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {tx.employeeCount} employees
+                      </td>
+                      <td className="px-6 py-4 font-medium text-gray-900">
+                        ${tx.totalAmount.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            STATUS_STYLES[tx.status] ?? "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {tx.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-gray-600">
+                        {new Date(tx.createdAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
 
-        <div className="px-4 sm:px-6 py-3 border-t text-xs text-gray-500">
-          Showing {filtered.length} of {MOCK_TRANSACTIONS.length} transactions
-        </div>
+            <div className="px-4 sm:px-6 py-3 border-t text-xs text-gray-500">
+              Showing {filtered.length} of {MOCK_TRANSACTIONS.length} transactions
+            </div>
+          </>
+        )}
       </div>
     </section>
   );
