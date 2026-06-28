@@ -7,9 +7,11 @@ import {
   Download,
   Filter,
   X,
+  Eye,
 } from "lucide-react";
 import { MOCK_TRANSACTIONS, MOCK_EMPLOYEES } from "@/lib/api/mockData";
 import type { PayrollTransaction } from "@/types";
+import TransactionDetailDrawer from "./TransactionDetailDrawer";
 
 type StatusFilter = "all" | "verified" | "pending" | "failed";
 
@@ -32,14 +34,22 @@ const initialFilters: Filters = {
 function toCsvRow(values: string[]): string {
   return values
     .map((v) => {
-      const needsQuoting = v.includes(",") || v.includes('"') || v.includes("\n");
+      const needsQuoting =
+        v.includes(",") || v.includes('"') || v.includes("\n");
       return needsQuoting ? `"${v.replace(/"/g, '""')}"` : v;
     })
     .join(",");
 }
 
 function exportToCsv(rows: PayrollTransaction[]): string {
-  const header = toCsvRow(["ID", "Date", "Status", "Total Amount", "Employees", "Tx Hash"]);
+  const header = toCsvRow([
+    "ID",
+    "Date",
+    "Status",
+    "Total Amount",
+    "Employees",
+    "Tx Hash",
+  ]);
   const body = rows
     .map((tx) =>
       toCsvRow([
@@ -68,6 +78,14 @@ function downloadCsv(csv: string, filename: string) {
 function TransactionHistory() {
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<PayrollTransaction | null>(null);
+  const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
+
+  const handleViewDetails = (transaction: PayrollTransaction) => {
+    setSelectedTransaction(transaction);
+    setDetailDrawerOpen(true);
+  };
 
   const filtered = useMemo(() => {
     let results = [...MOCK_TRANSACTIONS];
@@ -311,13 +329,19 @@ function TransactionHistory() {
               >
                 Date
               </th>
+              <th
+                scope="col"
+                className="px-6 py-3 text-xs font-medium text-gray-600 uppercase"
+              >
+                <span className="sr-only">Actions</span>
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200" aria-live="polite">
             {filtered.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="px-6 py-8 text-center text-sm text-gray-500"
                 >
                   No transactions match the current filters.
@@ -325,7 +349,11 @@ function TransactionHistory() {
               </tr>
             ) : (
               filtered.map((tx) => (
-                <tr key={tx.id}>
+                <tr
+                  key={tx.id}
+                  className="hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => handleViewDetails(tx)}
+                >
                   <td className="px-6 py-4 flex items-center">
                     {tx.totalAmount > 0 ? (
                       <ArrowDownLeft
@@ -362,6 +390,20 @@ function TransactionHistory() {
                   <td className="px-6 py-4 text-gray-600">
                     {new Date(tx.createdAt).toLocaleDateString()}
                   </td>
+                  <td className="px-6 py-4">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewDetails(tx);
+                      }}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors"
+                      aria-label={`View details for transaction ${tx.id}`}
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      Details
+                    </button>
+                  </td>
                 </tr>
               ))
             )}
@@ -372,6 +414,12 @@ function TransactionHistory() {
           Showing {filtered.length} of {MOCK_TRANSACTIONS.length} transactions
         </div>
       </div>
+
+      <TransactionDetailDrawer
+        transaction={selectedTransaction}
+        open={detailDrawerOpen}
+        onOpenChange={setDetailDrawerOpen}
+      />
     </section>
   );
 }
