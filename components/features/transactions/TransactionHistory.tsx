@@ -82,6 +82,12 @@ function downloadCsv(csv: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+const STATUS_STYLES: Record<string, string> = {
+  verified: "bg-green-100 text-green-800",
+  pending: "bg-yellow-100 text-yellow-800",
+  failed: "bg-red-100 text-red-800",
+};
+
 function TransactionHistory() {
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const [showFilters, setShowFilters] = useState(false);
@@ -206,7 +212,8 @@ function TransactionHistory() {
   return (
     <section aria-labelledby="transaction-history-heading">
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b flex items-center justify-between">
+        {/* Header bar */}
+        <div className="px-4 sm:px-6 py-4 border-b flex items-center justify-between gap-2">
           <h3
             id="transaction-history-heading"
             className="text-lg font-medium text-gray-900"
@@ -324,33 +331,28 @@ function TransactionHistory() {
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
             >
               <Download className="w-3.5 h-3.5" />
-              Export CSV
+              <span className="hidden sm:inline">Export CSV</span>
             </button>
           </div>
         </div>
 
+        {/* Filter panel */}
         {showFilters && (
           <div
             id="filter-panel"
             role="region"
             aria-label="Filter transactions"
-            className="px-6 py-4 bg-gray-50 border-b grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3"
+            className="px-4 sm:px-6 py-4 bg-gray-50 border-b grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3"
           >
             <div>
-              <label
-                htmlFor="filter-status"
-                className="block text-xs font-medium text-gray-600 mb-1"
-              >
+              <label htmlFor="filter-status" className="block text-xs font-medium text-gray-600 mb-1">
                 Status
               </label>
               <select
                 id="filter-status"
                 value={filters.status}
                 onChange={(e) =>
-                  setFilters((f) => ({
-                    ...f,
-                    status: e.target.value as StatusFilter,
-                  }))
+                  setFilters((f) => ({ ...f, status: e.target.value as StatusFilter }))
                 }
                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               >
@@ -361,10 +363,7 @@ function TransactionHistory() {
               </select>
             </div>
             <div>
-              <label
-                htmlFor="filter-employee"
-                className="block text-xs font-medium text-gray-600 mb-1"
-              >
+              <label htmlFor="filter-employee" className="block text-xs font-medium text-gray-600 mb-1">
                 Employee
               </label>
               <input
@@ -372,52 +371,37 @@ function TransactionHistory() {
                 type="text"
                 placeholder="Search name..."
                 value={filters.employee}
-                onChange={(e) =>
-                  setFilters((f) => ({ ...f, employee: e.target.value }))
-                }
+                onChange={(e) => setFilters((f) => ({ ...f, employee: e.target.value }))}
                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
             </div>
             <div>
-              <label
-                htmlFor="filter-date-from"
-                className="block text-xs font-medium text-gray-600 mb-1"
-              >
+              <label htmlFor="filter-date-from" className="block text-xs font-medium text-gray-600 mb-1">
                 From
               </label>
               <input
                 id="filter-date-from"
                 type="date"
                 value={filters.dateFrom}
-                onChange={(e) =>
-                  setFilters((f) => ({ ...f, dateFrom: e.target.value }))
-                }
+                onChange={(e) => setFilters((f) => ({ ...f, dateFrom: e.target.value }))}
                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
             </div>
             <div>
-              <label
-                htmlFor="filter-date-to"
-                className="block text-xs font-medium text-gray-600 mb-1"
-              >
+              <label htmlFor="filter-date-to" className="block text-xs font-medium text-gray-600 mb-1">
                 To
               </label>
               <input
                 id="filter-date-to"
                 type="date"
                 value={filters.dateTo}
-                onChange={(e) =>
-                  setFilters((f) => ({ ...f, dateTo: e.target.value }))
-                }
+                onChange={(e) => setFilters((f) => ({ ...f, dateTo: e.target.value }))}
                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
             </div>
             <div className="flex items-end gap-2">
               <div className="flex-1">
-                <label
-                  htmlFor="filter-payroll-run"
-                  className="block text-xs font-medium text-gray-600 mb-1"
-                >
+                <label htmlFor="filter-payroll-run" className="block text-xs font-medium text-gray-600 mb-1">
                   Payroll Run
                 </label>
                 <input
@@ -425,9 +409,7 @@ function TransactionHistory() {
                   type="text"
                   placeholder="Run ID..."
                   value={filters.payrollRun}
-                  onChange={(e) =>
-                    setFilters((f) => ({ ...f, payrollRun: e.target.value }))
-                  }
+                  onChange={(e) => setFilters((f) => ({ ...f, payrollRun: e.target.value }))}
                   className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
@@ -522,36 +504,11 @@ function TransactionHistory() {
           </caption>
           <thead className="bg-gray-50">
             <tr>
-              <th
-                scope="col"
-                className="px-6 py-3 text-xs font-medium text-gray-600 uppercase"
-              >
-                Type
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-xs font-medium text-gray-600 uppercase"
-              >
-                Recipient
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-xs font-medium text-gray-600 uppercase"
-              >
-                Amount
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-xs font-medium text-gray-600 uppercase"
-              >
-                Status
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-xs font-medium text-gray-600 uppercase"
-              >
-                Date
-              </th>
+              <th scope="col" className="px-6 py-3 text-xs font-medium text-gray-600 uppercase">Type</th>
+              <th scope="col" className="px-6 py-3 text-xs font-medium text-gray-600 uppercase">Recipient</th>
+              <th scope="col" className="px-6 py-3 text-xs font-medium text-gray-600 uppercase">Amount</th>
+              <th scope="col" className="px-6 py-3 text-xs font-medium text-gray-600 uppercase">Status</th>
+              <th scope="col" className="px-6 py-3 text-xs font-medium text-gray-600 uppercase">Date</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200" aria-live="polite">
@@ -564,6 +521,8 @@ function TransactionHistory() {
                   {hasFiltersApplied
                     ? "No transactions match the current filters. Try broadening your filter criteria."
                     : "No transactions yet. Process a payroll run to populate the transaction history."}
+                <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">
+                  No transactions match the current filters.
                 </td>
               </tr>
             ) : (
@@ -571,32 +530,18 @@ function TransactionHistory() {
                 <tr key={tx.id}>
                   <td className="px-6 py-4 flex items-center">
                     {tx.totalAmount > 0 ? (
-                      <ArrowDownLeft
-                        className="w-4 h-4 text-green-600 mr-2"
-                        aria-hidden="true"
-                      />
+                      <ArrowDownLeft className="w-4 h-4 text-green-600 mr-2" aria-hidden="true" />
                     ) : (
-                      <ArrowUpRight
-                        className="w-4 h-4 text-red-600 mr-2"
-                        aria-hidden="true"
-                      />
+                      <ArrowUpRight className="w-4 h-4 text-red-600 mr-2" aria-hidden="true" />
                     )}
                     Payout
                   </td>
-                  <td className="px-6 py-4 text-gray-900">
-                    {tx.employeeCount} employees
-                  </td>
-                  <td className="px-6 py-4 font-medium text-gray-900">
-                    ${tx.totalAmount.toLocaleString()}
-                  </td>
+                  <td className="px-6 py-4 text-gray-900">{tx.employeeCount} employees</td>
+                  <td className="px-6 py-4 font-medium text-gray-900">${tx.totalAmount.toLocaleString()}</td>
                   <td className="px-6 py-4">
                     <span
                       className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        tx.status === "verified"
-                          ? "bg-green-100 text-green-800"
-                          : tx.status === "pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800"
+                        STATUS_STYLES[tx.status] ?? "bg-gray-100 text-gray-600"
                       }`}
                     >
                       {tx.status}
@@ -611,7 +556,7 @@ function TransactionHistory() {
           </tbody>
         </table>
 
-        <div className="px-6 py-3 border-t text-xs text-gray-500">
+        <div className="px-4 sm:px-6 py-3 border-t text-xs text-gray-500">
           Showing {filtered.length} of {MOCK_TRANSACTIONS.length} transactions
         </div>
       </div>
